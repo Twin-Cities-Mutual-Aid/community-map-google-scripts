@@ -1,90 +1,50 @@
 function sendSms(to, body) {
-    const ACCOUNT_SID = "XXXXXXXXXXXXXXXX";
-    const ACCOUNT_TOKEN = "XXXXXXXXXXXXXXXX";
-    const fromPhoneNumber = "+1XXXXXXXXXX";
-    
-    var messages_url = "https://api.twilio.com/2010-04-01/Accounts/" + ACCOUNT_SID + "/Messages.json";
+  const ACCOUNT_SID = "XXXXXXXXXXXXXXXX";
+  const ACCOUNT_TOKEN = "XXXXXXXXXXXXXXXX";
+  const fromPhoneNumber = "+1XXXXXXXXXX";
   
-    var payload = {
-      "To": to,
-      "Body" : body,
-      "From" : fromPhoneNumber
-    };
+  var messages_url = "https://api.twilio.com/2010-04-01/Accounts/" + ACCOUNT_SID + "/Messages.json";
+
+  var payload = {
+    "To": to,
+    "Body" : body,
+    "From" : fromPhoneNumber
+  };
+
+  var options = {
+    "method" : "post",
+    "payload" : payload
+  };
+
+  options.headers = { 
+    "Authorization" : "Basic " + Utilities.base64Encode(ACCOUNT_SID +":"+ ACCOUNT_TOKEN)
+  };
+
+  UrlFetchApp.fetch(messages_url, options);
+}
+ 
+function sendResponses() {
+  var sheet = SpreadsheetApp.getActive().getSheetByName('Receive');
+  var startRow = 2; // start after column title row
+  var responseColumn = 7; // response body column
+  var sendColumn = 8; // whether to send / if already been sent
   
-    var options = {
-      "method" : "post",
-      "payload" : payload
-    };
-  
-    options.headers = { 
-      "Authorization" : "Basic " + Utilities.base64Encode(ACCOUNT_SID +":"+ ACCOUNT_TOKEN)
-    };
-  
-    UrlFetchApp.fetch(messages_url, options);
-  }
-  
-  /*
-  Spreadsheet setup idea:
-  Phone Number  |  Message Body | Status  |
-  xxx-xxx-xxxx  |    msg here   | sent (or error) | <SEND BUTTON that runs this function> 
-  */
-  function sendResponses() {
-    var sheet = SpreadsheetApp.getActive().getSheetByName('SendResponses');
-    var startRow = 2; // start after column title row
-    var numRows = sheet.getLastRow() - 1; // subtract column title row from total row count
-    var dataRange = sheet.getRange(startRow, 1, numRows, 3) // row, column, numRows, numColumns
-    var data = dataRange.getValues();
-  
-    for (i in data) {
-      var row = data[i];
-      var msgSentStatus = row[2]
-      if (msgSentStatus == "sent") {
-        continue; // skip sending this message. It was already sent
-      } else {
-        try {
-          response_data = sendSms(row[0], row[1]);
-          status = "sent";
-        } catch(err) {
-          Logger.log(err);
-          status = "error";
-        }
-        sheet.getRange(startRow + Number(i), 3).setValue(status);
-      }
-    }
-  }
-  
-  function flatten(nestedArr){
-    return [].concat.apply([], nestedArr);
-  }
-  
-  /*
-  Spreadsheet setup idea:
-  Send to       |    Reminder info    |    Status     |
-  xxx-xxx-xxxx  |     msg to send     |  sent (or error) |  <SEND BUTTON that runs this function> 
-  xxx-xxx-xxxx  |  -------------------------------------------
-  xxx-xxx-xxxx  |  -------------------------------------------
-  ...           |  -------------------------------------------
-  */
-  
-  function sendReminders() {
-    var sheet = SpreadsheetApp.getActive().getSheetByName('SendReminders');
-    var reminderMessage = sheet.getRange("B2").getValue(); // get the current reminder message to be sent
-    
-    var numbersCol = sheet.getRange("A2:A").getValues();
-    numbersCol = numbersCol.filter(String);
-    var lenNums = numbersCol.length; // get length of a
-    var sendToNumbers = flatten(sheet.getRange("A2:A" + (lenNums + 1)).getValues()); // arr of all #s to send reminder to
-    
-    for (i in sendToNumbers) {
+  var numEntries = sheet.getRange("C2:C").getValues().filter(Number).length;
+  var endRow = numEntries + 2; // offset for column headers + no zero indexing
+  for (var i = 2; i < endRow; i++) {
+    var currRow = sheet.getRange(i, 1, 1, 8).getValues()[0]; // get the entire current row as an array
+    Logger.log(currRow);
+    var responseMessage = sheet.getRange(i, responseColumn).getDisplayValue();
+    var readyToSend = sheet.getRange(i, sendColumn).getDisplayValue();
+    if (responseMessage != "" && readyToSend === "READY") {
       try {
-        response_data = sendSms(sendToNumbers[i], reminderMessage);
-        status = "sent"
+        response_data = sendSms(currRow[3], currRow[6]); // indexes based off of zero-indexed row array
+        status = "SENT";
       } catch(err) {
         Logger.log(err);
-        status = "error";
+        status = "ERROR";
       }
+      sheet.getRange(i, sendColumn).setValue(status);
     }
-    // @todo: some way to denote whether the reminder was sent or errored when trying to send to
-    // each number in the list. @todo: move current message down to previous message category in
-    // spreadsheet
   }
+}
