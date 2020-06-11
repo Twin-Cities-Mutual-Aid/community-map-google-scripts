@@ -82,7 +82,7 @@ function myFunction() {
     }
     currColumn++;
     if (isAfterHours) {
-      sheet.getRange(currRow, currColumn).setValue("Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you by 8am CT");
+      sheet.getRange(currRow, currColumn).setValue("Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you starting at 8am CT");
       currColumn++;
       sheet.getRange(currRow, currColumn).setValue("READY");
     }
