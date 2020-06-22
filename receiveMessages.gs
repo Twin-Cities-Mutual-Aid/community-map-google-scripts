@@ -34,28 +34,7 @@ function myFunction() {
   var response = UrlFetchApp.fetch(url, options);
 
   // Parse any new JSON data and put it into the correct sheet page.
-  var sheet = SpreadsheetApp.getActive().getSheetByName("Receive");
-  // Find the first empty row / find the number of messages already added to the sheet
-  const numberToRetrieve = 1000;
-  const hoursOffset = 0;
-
-  var options = {
-    "method": "get",
-  };
-  options.headers = {
-    "Authorization": "Basic " + Utilities.base64Encode(ACCOUNT_SID + ":" + ACCOUNT_TOKEN),
-  };
-  var url =
-    "https://api.twilio.com/2010-04-01/Accounts/" +
-    ACCOUNT_SID +
-    "/Messages.json?To=" +
-    toPhoneNumber +
-    "&PageSize=" +
-    numberToRetrieve;
-  var response = UrlFetchApp.fetch(url, options);
-
-  // Parse any new JSON data and put it into the correct sheet page.
-  var sheet = SpreadsheetApp.getActive().getSheetByName("Receive");
+  var sheet = SpreadsheetApp.getActive().getSheetByName("Texts");
   var currRow = 2; // 2 to account for non-zero indexing and the first row being filled with column info
   var startColumn = 1;
   var sidColumn = 9; // message ID column
@@ -100,15 +79,15 @@ function myFunction() {
         sheet.getRange(currRow, currColumn).setValue(mediaLinks);
       }
       currColumn++;
-      if (isAfterHours) {
-        sheet
-          .getRange(currRow, currColumn)
-          .setValue(
-            "Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you starting at 8am CT"
-          );
-        currColumn++;
-        sheet.getRange(currRow, currColumn).setValue("READY");
-      }
+      // if (isAfterHours) {
+      //   sheet
+      //     .getRange(currRow, currColumn)
+      //     .setValue(
+      //       "Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you starting at 8am CT"
+      //     );
+      //   currColumn++;
+      //   sheet.getRange(currRow, currColumn).setValue("READY");
+      // }
       sheet.getRange(currRow, sidColumn).setValue(dataAll.messages[i].sid);
     }
     currRow++;
