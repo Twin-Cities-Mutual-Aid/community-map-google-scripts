@@ -39,6 +39,8 @@ function myFunction() {
   var startColumn = 1;
   var sidColumn = 9; // message ID column
   var dataAll = JSON.parse(response.getContentText());
+  var todaysDate = Utilities.formatDate(new Date(), "America/Chicago", "yyyy-MM-dd HH:mm");
+  var todaysDay = todaysDate.split(" ")[0];
 
   for (var i = dataAll.messages.length - 1; i >= 0; i--) {
     if (sheet.getRange(currRow, sidColumn).getValue() != dataAll.messages[i].sid) {
@@ -57,7 +59,7 @@ function myFunction() {
         var currDate = currDateTime.split(" ")[0];
         var currTime = currDateTime.split(" ")[1];
         var currHour = Number(currTime.split(":")[0]);
-        if (currHour > 23 || currHour < 8) {
+        if ((currHour > 23 && todaysDay === currDate) || (currHour < 8 && todaysDay === currDate)) {
           isAfterHours = true;
         }
         sheet.getRange(currRow, currColumn).setValue(currDate);
@@ -79,15 +81,15 @@ function myFunction() {
         sheet.getRange(currRow, currColumn).setValue(mediaLinks);
       }
       currColumn++;
-      // if (isAfterHours) {
-      //   sheet
-      //     .getRange(currRow, currColumn)
-      //     .setValue(
-      //       "Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you starting at 8am CT"
-      //     );
-      //   currColumn++;
-      //   sheet.getRange(currRow, currColumn).setValue("READY");
-      // }
+      if (isAfterHours) {
+        sheet
+          .getRange(currRow, currColumn)
+          .setValue(
+            "Twin Cities Mutual Aid: Thanks for your message. We are currently offline. We'll get back to you starting at 8am CT"
+          );
+        currColumn++;
+        sheet.getRange(currRow, currColumn).setValue("READY");
+      }
       sheet.getRange(currRow, sidColumn).setValue(dataAll.messages[i].sid);
     }
     currRow++;
